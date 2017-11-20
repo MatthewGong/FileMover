@@ -127,6 +127,7 @@ def create_subfolders(dest, SUBFOLDERS):
 	"""
 	if not os.path.isdir(dest):
 		os.makedirs(dest)
+		print "WARNING: The chosen output directory did not exist."
 
 	for folder in SUBFOLDERS:
 		path = os.path.join(dest,folder)
