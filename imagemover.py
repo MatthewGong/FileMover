@@ -10,7 +10,7 @@ VALID_CHAR = ['1','2','3','4','5','6','7','8','9','q', ' ','0']
 INPUT_MAP  = [ 1,2,3,4,5,6,7,8,9]
 VALID_MODE = ['load', 'Load', 'copy', 'Copy', 'move', 'Move']
 DEFAULT_SUBFOLDERS = ['Dispersoid', 'Interface', 'Polycrystal', 'Single Phase', 'Atomic-Images',]
-
+VERBOSITY = 5
 
 def build_parser():
     parser = argparse.ArgumentParser()
@@ -53,6 +53,22 @@ def transfer(destination, subfolder, origin, name, mode):
 	"""
 	Move or copy the data files to desired destination folder/subfolders
 	"""
+
+	# If it's an EMI file we have to move the .SER files as well
+	# Find the associated SER files and move them as well
+	if name.endswith("emi"):
+		#print origin, name
+		directory = origin[:-len(name)]
+		#print directory, "directory"
+		arr = os.listdir(directory)
+		#print arr
+		ser_files = [x for x in arr if name[:-4] in x and x != name]
+		#print ser_files
+		for file in ser_files:
+			transfer(destination, subfolder, directory+file, file, mode)
+			#print "I was going to try and transer", directory+file,   file
+
+
 	dest = os.path.join(destination, subfolder, name)
 	try:
 		if mode=='copy':
@@ -62,6 +78,35 @@ def transfer(destination, subfolder, origin, name, mode):
 	except:
 		print "A file with the same name already exists at the destination"
 
+
+def openproperly(image):
+	"""
+	Determines how best to open and display the immage
+	"""
+	print image
+	s = hs.load(image)
+
+	if image.endswith('dm3'):
+		plt.imshow(s.data)
+
+	elif image.endswith('emi'):
+		if type(s) == list:
+			for item in s:
+				item.plot()
+		else:
+			s.plot()
+
+	elif image.endswith('ser'):
+		s.plot() 
+	elif image.endswith('EMSA'):
+		s.plot()
+
+	else:
+		s.plot()
+
+	plt.show(block=False)
+	raw_input("press Enter")
+	plt.close('all')
 
 
 def save_files(dest, images):
@@ -91,17 +136,17 @@ def main():
 	parser = build_parser()
 	options = parser.parse_args()
 	
-
+	COUNTER = 0
 	MODE = options.mode
 	DATA_PATH = options.input
 	TARGET_PATH = options.output
 	SUBFOLDERS = DEFAULT_SUBFOLDERS if options.folders == None else options.folders
-	print SUBFOLDERS, "SUBFOLDERS"
+	#print SUBFOLDERS, "SUBFOLDERS"
 
 	# Create and 
 	KEY_MAP = SUBFOLDERS + SUBFOLDERS[:9-len(SUBFOLDERS)]
 	I_MAP = [key%len(SUBFOLDERS) if key%len(SUBFOLDERS) != 0 else len(SUBFOLDERS)  for key in INPUT_MAP]
-	print I_MAP
+	#print I_MAP
 	INPUTS = OrderedDict(zip(KEY_MAP, I_MAP))
 	
 	INPUTS["pass"] = "0, ' '" 
@@ -135,32 +180,22 @@ def main():
 			for f in filenames:
 				for ftype in options.type:
 					if f.endswith(ftype):
-						#print f
 						string = os.path.join(root, f)
 						images[string] = f
+
 					
 	
 	create_subfolders(TARGET_PATH,SUBFOLDERS)
 	
 	for image in images.keys():
-	
-		print ODprint(INPUTS)	
 		
-		if image.endswith("dm3") or image.endswith(".dm3"):
-			
-			s = hs.load(image)
-			s.metadata
-			plt.imshow(s.data)
-			plt.show(block=False)
-			raw_input("press Enter")
-			plt.close()
-			
-		else:
-			temp = plt.imread(image)
-			plt.imshow(temp)
-			plt.show(block=False)
-			raw_input("press Enter")
-			plt.close()
+		# print the key options only every so often
+		if COUNTER%VERBOSITY == 0:
+			print ODprint(INPUTS)
+		COUNTER += 1
+
+		#determines the best way to load and display the image
+		openproperly(image)
 
 		char = getch.getch()
 		while char not in VALID_CHAR:
