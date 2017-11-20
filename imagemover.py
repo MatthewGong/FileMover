@@ -76,7 +76,7 @@ def transfer(destination, subfolder, origin, name, mode):
 		elif mode=='move':
 			shutil.move(origin, dest)
 	except:
-		print "A file with the same name already exists at the destination"
+		print "An error occured while moving your file. Check your output folder"
 
 
 def openproperly(image):
@@ -125,6 +125,9 @@ def create_subfolders(dest, SUBFOLDERS):
 	"""
 	Create destination subfolders for the images to be moved into
 	"""
+	if not os.path.isdir(dest):
+		os.makedirs(dest)
+
 	for folder in SUBFOLDERS:
 		path = os.path.join(dest,folder)
 		try:
