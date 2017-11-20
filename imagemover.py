@@ -4,18 +4,19 @@ import os
 import argparse
 import hyperspy.api as hs
 from matplotlib import pyplot as plt
-
+from collections import OrderedDict
 
 VALID_CHAR = ['1','2','3','4','5','6','7','8','9','q', ' ','0']
+INPUT_MAP  = [ 1,2,3,4,5,6,7,8,9]
 VALID_MODE = ['load', 'Load', 'copy', 'Copy', 'move', 'Move']
-SUBFOLDERS = ['Dispersoid', 'Interface', 'Polycrystal', 'Single Phase', 'Atomic-Images',]
+DEFAULT_SUBFOLDERS = ['Dispersoid', 'Interface', 'Polycrystal', 'Single Phase', 'Atomic-Images',]
 
 
 def build_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--type', type=str,
-            dest='type', help='file type',
-            metavar='TYPE', required=True)
+            dest='type', help='file type/s',
+            metavar='TYPE', required=True, nargs="+")
     parser.add_argument('--input',type=str,
 	    	dest='input', help='input path (default %(default)s',
 	    	metavar='INPUT', default=os.getcwd())
@@ -25,6 +26,9 @@ def build_parser():
     parser.add_argument('--mode', type=str,
     		dest='mode', help='copy, or move (default %(default)s)',
     		metavar= 'MODE', default="copy")
+    parser.add_argument('--subfolders', type=str,
+    		dest='folders', help='The subfolders you want to sort to',
+    		metavar= 'FOLDERS', nargs="*")
     parser.add_argument('--load', type=str,
     		dest='load', help='file to load list of files from (default %(default)s)',
     		metavar= 'LOAD', default=None)
@@ -34,6 +38,16 @@ def build_parser():
     parser.set_defaults()
     return parser
     
+def ODprint(OrdDict):
+	"""
+	Creates a nice output for printing ordered dictionaries
+	"""
+	string = "{"
+	for key in OrdDict:
+		string += "({} : {}".format(key, OrdDict[key])
+		string += "), "
+	string = string[:-2] + "}"
+	return string
 
 def transfer(destination, subfolder, origin, name, mode):
 	"""
@@ -57,12 +71,15 @@ def save_files(dest, images):
 	file = open(dest, 'w')
 
 	for image in images:
-		line = images[image] + ' ' + image + '\n'
+		line = images[image] + ', ' + image + '\n'
 		file.write(line)
 
 	file.close()
 
-def create_subfolders(dest):
+def create_subfolders(dest, SUBFOLDERS):
+	"""
+	Create destination subfolders for the images to be moved into
+	"""
 	for folder in SUBFOLDERS:
 		path = os.path.join(dest,folder)
 		try:
@@ -78,10 +95,23 @@ def main():
 	MODE = options.mode
 	DATA_PATH = options.input
 	TARGET_PATH = options.output
+	SUBFOLDERS = DEFAULT_SUBFOLDERS if options.folders == None else options.folders
+	print SUBFOLDERS, "SUBFOLDERS"
 
+	KEY_MAP = SUBFOLDERS + SUBFOLDERS[:9-len(SUBFOLDERS)]
+	I_MAP = [key%len(SUBFOLDERS) if key%len(SUBFOLDERS) != 0 else len(SUBFOLDERS)  for key in INPUT_MAP]
+	INPUTS = OrderedDict(zip(KEY_MAP, I_MAP))
+	print I_MAP
+	#INPUTS["0, ' '"] = "pass" 
+	#INPUTS["q"] = "Save/Quit"
+	INPUTS["pass"] = "0, ' '" 
+	INPUTS["Save/Quit"] = "q" 
+
+	# Check for Valid inputs
 	if MODE not in VALID_MODE:
 		raise ValueError("You have chosen an invalid mode ({}). Please choose move or copy.".format(MODE))
 
+	# Set up image dictionaries
 	images = {}
 
 	if options.load is not None:
@@ -90,63 +120,72 @@ def main():
 		"""
 		LOAD_PATH = options.load
 
+		# construct the dictionaries from the chosen file at LOAD_PATH
 		with open(LOAD_PATH, 'r') as f:
 			for line in f:
-				splitLine = line.split()
+				splitLine = line.strip('\n').split(", ")
 				images[splitLine[1]] = splitLine[0]
-		
+				
 	else:
 		"""
-		Builds the list of files with the chosen file types
+		Builds the list of files with the specified file type
 		from a chosen directory
 		"""
 		for root, directories, filenames in os.walk(DATA_PATH):
 			for f in filenames:
-				if f.endswith(options.type):
-					print f
-					string = os.path.join(root, f)
-					images[string] = f
+				for ftype in options.type:
+					if f.endswith(ftype):
+						#print f
+						string = os.path.join(root, f)
+						images[string] = f
 					
 	
-	create_subfolders(TARGET_PATH)
+	create_subfolders(TARGET_PATH,SUBFOLDERS)
 	
 	for image in images.keys():
-
-		if options.type == "dm3" or options.type == ".dm3":
+	
+		print ODprint(INPUTS)	
+		
+		if image.endswith("dm3") or image.endswith(".dm3"):
 			
 			s = hs.load(image)
 			s.metadata
 			plt.imshow(s.data)
-			plt.show()
+			plt.show(block=False)
+			raw_input("press Enter")
+			plt.close()
 			
 		else:
 			temp = plt.imread(image)
 			plt.imshow(temp)
-			plt.show()
-		
-		char = getch.getche()
+			plt.show(block=False)
+			raw_input("press Enter")
+			plt.close()
+
+		char = getch.getch()
 		while char not in VALID_CHAR:
-			char = getch.getche()
+			char = getch.getch()
 		
 		print char
+
 		if char=='1':
-			transfer(TARGET_PATH,SUBFOLDERS[0%len(SUBFOLDERS)],image, images[image], MODE)
+			transfer(TARGET_PATH,SUBFOLDERS[I_MAP[0]],image, images[image], MODE)
 		elif char=='2':
-			transfer(TARGET_PATH,SUBFOLDERS[1%len(SUBFOLDERS)],image, images[image], MODE)
+			transfer(TARGET_PATH,SUBFOLDERS[I_MAP[1]],image, images[image], MODE)
 		elif char=='3':
-			transfer(TARGET_PATH,SUBFOLDERS[2%len(SUBFOLDERS)],image, images[image], MODE)
+			transfer(TARGET_PATH,SUBFOLDERS[I_MAP[2]],image, images[image], MODE)
 		elif char=='4':
-			transfer(TARGET_PATH,SUBFOLDERS[3%len(SUBFOLDERS)],image, images[image], MODE)
+			transfer(TARGET_PATH,SUBFOLDERS[I_MAP[3]],image, images[image], MODE)
 		elif char=='5':
-			transfer(TARGET_PATH,SUBFOLDERS[4%len(SUBFOLDERS)],image, images[image], MODE)
+			transfer(TARGET_PATH,SUBFOLDERS[I_MAP[4]],image, images[image], MODE)
 		elif char=='6':
-			transfer(TARGET_PATH,SUBFOLDERS[5%len(SUBFOLDERS)],image, images[image], MODE)
+			transfer(TARGET_PATH,SUBFOLDERS[I_MAP[5]],image, images[image], MODE)
 		elif char=='7':
-			transfer(TARGET_PATH,SUBFOLDERS[6%len(SUBFOLDERS)],image, images[image], MODE)
+			transfer(TARGET_PATH,SUBFOLDERS[I_MAP[6]],image, images[image], MODE)
 		elif char=='8':
-			transfer(TARGET_PATH,SUBFOLDERS[7%len(SUBFOLDERS)],image, images[image], MODE)
+			transfer(TARGET_PATH,SUBFOLDERS[I_MAP[7]],image, images[image], MODE)
 		elif char=='9':
-			transfer(TARGET_PATH,SUBFOLDERS[8%len(SUBFOLDERS)],image, images[image], MODE)
+			transfer(TARGET_PATH,SUBFOLDERS[I_MAP[8]],image, images[image], MODE)
 		elif char=='q':
 			save_files(options.save_output,images)
 			break
