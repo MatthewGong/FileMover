@@ -98,12 +98,12 @@ def main():
 	SUBFOLDERS = DEFAULT_SUBFOLDERS if options.folders == None else options.folders
 	print SUBFOLDERS, "SUBFOLDERS"
 
+	# Create and 
 	KEY_MAP = SUBFOLDERS + SUBFOLDERS[:9-len(SUBFOLDERS)]
 	I_MAP = [key%len(SUBFOLDERS) if key%len(SUBFOLDERS) != 0 else len(SUBFOLDERS)  for key in INPUT_MAP]
-	INPUTS = OrderedDict(zip(KEY_MAP, I_MAP))
 	print I_MAP
-	#INPUTS["0, ' '"] = "pass" 
-	#INPUTS["q"] = "Save/Quit"
+	INPUTS = OrderedDict(zip(KEY_MAP, I_MAP))
+	
 	INPUTS["pass"] = "0, ' '" 
 	INPUTS["Save/Quit"] = "q" 
 
@@ -169,23 +169,23 @@ def main():
 		print char
 
 		if char=='1':
-			transfer(TARGET_PATH,SUBFOLDERS[I_MAP[0]],image, images[image], MODE)
+			transfer(TARGET_PATH,SUBFOLDERS[I_MAP[0]-1],image, images[image], MODE)
 		elif char=='2':
-			transfer(TARGET_PATH,SUBFOLDERS[I_MAP[1]],image, images[image], MODE)
+			transfer(TARGET_PATH,SUBFOLDERS[I_MAP[1]-1],image, images[image], MODE)
 		elif char=='3':
-			transfer(TARGET_PATH,SUBFOLDERS[I_MAP[2]],image, images[image], MODE)
+			transfer(TARGET_PATH,SUBFOLDERS[I_MAP[2]-1],image, images[image], MODE)
 		elif char=='4':
-			transfer(TARGET_PATH,SUBFOLDERS[I_MAP[3]],image, images[image], MODE)
+			transfer(TARGET_PATH,SUBFOLDERS[I_MAP[3]-1],image, images[image], MODE)
 		elif char=='5':
-			transfer(TARGET_PATH,SUBFOLDERS[I_MAP[4]],image, images[image], MODE)
+			transfer(TARGET_PATH,SUBFOLDERS[I_MAP[4]-1],image, images[image], MODE)
 		elif char=='6':
-			transfer(TARGET_PATH,SUBFOLDERS[I_MAP[5]],image, images[image], MODE)
+			transfer(TARGET_PATH,SUBFOLDERS[I_MAP[5]-1],image, images[image], MODE)
 		elif char=='7':
-			transfer(TARGET_PATH,SUBFOLDERS[I_MAP[6]],image, images[image], MODE)
+			transfer(TARGET_PATH,SUBFOLDERS[I_MAP[6]-1],image, images[image], MODE)
 		elif char=='8':
-			transfer(TARGET_PATH,SUBFOLDERS[I_MAP[7]],image, images[image], MODE)
+			transfer(TARGET_PATH,SUBFOLDERS[I_MAP[7]-1],image, images[image], MODE)
 		elif char=='9':
-			transfer(TARGET_PATH,SUBFOLDERS[I_MAP[8]],image, images[image], MODE)
+			transfer(TARGET_PATH,SUBFOLDERS[I_MAP[8]-1],image, images[image], MODE)
 		elif char=='q':
 			save_files(options.save_output,images)
 			break
