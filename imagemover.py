@@ -11,6 +11,8 @@ INPUT_MAP  = [ 1,2,3,4,5,6,7,8,9]
 VALID_MODE = ['load', 'Load', 'copy', 'Copy', 'move', 'Move']
 DEFAULT_SUBFOLDERS = ['Dispersoid', 'Interface', 'Polycrystal', 'Single Phase', 'Atomic-Images',]
 VERBOSITY = 5
+NOIMAGE = plt.imread("No_image_available.png")
+
 
 def build_parser():
     parser = argparse.ArgumentParser()
@@ -87,7 +89,12 @@ def openproperly(image):
 	s = hs.load(image)
 
 	if image.endswith('dm3'):
-		plt.imshow(s.data)
+		
+		try:
+			plt.imshow(s.data)
+		except:
+			plt.imshow(NOIMAGE)
+			print "No image to display, check that this file contains an image file"
 
 	elif image.endswith('emi'):
 		if type(s) == list:
@@ -233,7 +240,7 @@ def main():
 
 		images.pop(image, None)
 
-	save_files(options.save_output, images)
+		save_files(options.save_output, images)
 
 
 if __name__ == '__main__':
